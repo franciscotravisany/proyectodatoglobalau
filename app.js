@@ -77,7 +77,6 @@ class DashboardController {
   }
 
   bindEvents() {
-    document.querySelector('#refreshButton').addEventListener('click', () => this.init(true));
     document.querySelector('#magnitudeFilter').addEventListener('change', () => this.renderFiltered());
     document.querySelector('#countryFilter').addEventListener('change', () => this.renderFiltered());
     document.querySelector('#placeFilter').addEventListener('input', () => this.renderFiltered());
