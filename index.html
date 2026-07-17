@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel interactivo de actividad sísmica mundial con datos del USGS.">
+  <title>SismoScope | Explorador sísmico global</title>
+  <script>
+    if (localStorage.getItem('sismoscope-theme') === 'dark' || (!localStorage.getItem('sismoscope-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    @keyframes pulse-ring { 0% { transform: scale(.7); opacity: .9 } 100% { transform: scale(1.9); opacity: 0 } }
+    .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .quake-scroll { scrollbar-width: thin; scrollbar-color: #14b8a6 transparent; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-sky-50 text-slate-900 antialiased transition-colors duration-500 dark:bg-[#06111f] dark:text-slate-100">
+  <div id="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-sky-50/95 backdrop-blur dark:bg-[#06111f]/95" role="status" aria-live="polite">
+    <div class="text-center">
+      <div class="relative mx-auto mb-5 h-16 w-16"><span class="pulse-ring absolute inset-0 rounded-full border-2 border-teal-500"></span><span class="absolute inset-3 rounded-full bg-teal-500"></span></div>
+      <p class="font-semibold">Conectando con la red sísmica USGS...</p>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Procesando datos GeoJSON</p>
+    </div>
+  </div>
+
+  <header class="sticky top-0 z-40 border-b border-sky-200/70 bg-sky-50/85 backdrop-blur-xl dark:border-white/10 dark:bg-[#06111f]/85">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Navegación principal">
+      <a href="#inicio" class="flex items-center gap-3 font-black tracking-tight"><span class="relative grid h-9 w-9 place-items-center rounded-full bg-teal-500 text-white"><span class="absolute h-3 w-3 rounded-full border-2 border-white"></span>◉</span><span>Sismo<span class="text-teal-500">Scope</span></span></a>
+      <div class="hidden items-center gap-6 text-sm font-medium md:flex"><a class="hover:text-teal-500" href="#panel">Panel</a><a class="hover:text-teal-500" href="#analitica">Analítica</a><a class="hover:text-teal-500" href="#chile">Chile</a><a class="hover:text-teal-500" href="#educacion">Aprende</a><a class="hover:text-teal-500" href="#multimedia">Multimedia</a></div>
+      <div class="flex gap-2"><button id="refreshButton" class="rounded-full border border-slate-200 px-3 py-2 text-sm hover:border-teal-500 dark:border-white/15" title="Actualizar datos">↻ <span class="hidden sm:inline">Actualizar</span></button><button id="themeButton" class="grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-lg text-white transition hover:rotate-12 dark:bg-amber-300 dark:text-slate-950" aria-label="Cambiar tema">☾</button></div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="inicio" class="relative overflow-hidden">
+      <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(14,165,233,.22),transparent_35%),radial-gradient(circle_at_10%_70%,rgba(45,212,191,.18),transparent_30%)]"></div>
+      <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[1.1fr_.9fr] lg:px-8">
+        <div><p class="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-teal-700 dark:text-teal-300"><span class="h-2 w-2 animate-pulse rounded-full bg-teal-500"></span> Datos globales en tiempo real</p><h1 class="max-w-3xl text-5xl font-black leading-[.95] tracking-[-.05em] sm:text-6xl lg:text-7xl">La Tierra se mueve.<br><span class="text-teal-500">Nosotros la medimos.</span></h1><p class="mt-6 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-300">Explora la actividad sísmica mundial registrada por el USGS, detecta patrones y observa qué está ocurriendo en Chile.</p><div class="mt-8 flex flex-wrap gap-3"><a href="#panel" class="rounded-full bg-slate-950 px-6 py-3 font-bold text-white shadow-lg transition hover:-translate-y-1 dark:bg-teal-400 dark:text-slate-950">Explorar datos ↓</a><span id="updateBadge" class="rounded-full border border-slate-200 px-5 py-3 text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">Esperando datos...</span></div></div>
+        <div class="relative mx-auto aspect-square w-full max-w-md"><div class="absolute inset-0 rounded-full border border-teal-500/20"></div><div class="absolute inset-[12%] rounded-full border border-teal-500/30"></div><div class="absolute inset-[25%] rounded-full border border-teal-500/40"></div><div class="pulse-ring absolute left-[58%] top-[25%] h-20 w-20 rounded-full border border-amber-500"></div><div class="absolute inset-[38%] grid place-items-center rounded-full bg-slate-950 text-center text-white shadow-2xl dark:bg-teal-400 dark:text-slate-950"><span><strong id="heroCount" class="block text-4xl">—</strong><small class="uppercase tracking-widest">sismos</small></span></div></div>
+      </div>
+    </section>
+
+    <section id="panel" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p class="text-sm font-bold uppercase tracking-[.2em] text-teal-600 dark:text-teal-400">Pulso de la última hora</p><h2 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Estado sísmico global</h2></div><p class="max-w-md text-sm text-slate-500 dark:text-slate-400">Las métricas se calculan localmente a partir del feed del USGS.</p></div>
+      <div id="errorBox" class="mb-6 hidden rounded-2xl border border-red-300 bg-red-50 p-4 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert"></div>
+      <div id="metrics" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+
+      <div class="mt-10 rounded-[2rem] border border-sky-200/80 bg-white/80 p-5 shadow-xl shadow-sky-900/5 backdrop-blur dark:border-white/10 dark:bg-white/[.04] sm:p-7">
+        <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"><div><p class="text-xs font-bold uppercase tracking-[.18em] text-sky-600 dark:text-sky-400">Catálogo de 30 días</p><h3 class="mt-1 text-2xl font-black">Explorador de eventos</h3><p class="text-sm text-slate-500 dark:text-slate-400">Busca por país, magnitud o ubicación sin recargar la página.</p></div><div class="grid gap-3 sm:grid-cols-3"><label class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Magnitud mínima<select id="magnitudeFilter" class="mt-1 block w-full rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none ring-sky-400 transition focus:ring-2 dark:border-white/15 dark:bg-slate-900 dark:text-white"><option value="0">Todas</option><option value="2">2.0+</option><option value="4">4.0+</option><option value="6">6.0+</option></select></label><label class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">País<select id="countryFilter" class="mt-1 block w-full rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none ring-sky-400 transition focus:ring-2 dark:border-white/15 dark:bg-slate-900 dark:text-white"><option value="">Todos los países</option><option value="Argentina">Argentina</option><option value="Chile">Chile</option><option value="Peru">Perú</option><option value="Mexico">México</option><option value="Japan">Japón</option><option value="Indonesia">Indonesia</option><option value="Alaska">Alaska</option></select></label><label class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Ubicación<input id="placeFilter" type="search" placeholder="Ej. Mendoza" class="mt-1 block w-full rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 ring-sky-400 transition focus:ring-2 dark:border-white/15 dark:bg-slate-900 dark:text-white"></label></div></div>
+        <div id="eventList" class="quake-scroll mt-6 grid max-h-[520px] gap-3 overflow-y-auto pr-1 md:grid-cols-2" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="analitica" class="bg-slate-950 py-20 text-white dark:bg-black/25"><div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.2fr_.8fr] lg:px-8"><article class="rounded-3xl bg-white/[.06] p-6 ring-1 ring-white/10 sm:p-8"><div class="mb-6"><p class="text-sm font-bold uppercase tracking-[.2em] text-teal-300">30 días significativos</p><h2 class="mt-2 text-3xl font-black">Distribución por magnitud</h2></div><div class="h-80"><canvas id="magnitudeChart" aria-label="Histograma de sismos por magnitud"></canvas></div></article><aside><h3 class="text-2xl font-black">Comparativa de profundidad</h3><p class="mt-2 text-slate-400">Los cinco eventos significativos más profundos del período.</p><div id="depthBars" class="mt-7 space-y-5"></div></aside></div></section>
+
+    <section id="chile" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"><div class="reveal rounded-[2rem] bg-gradient-to-br from-cyan-700 via-sky-800 to-indigo-950 p-7 text-white shadow-2xl shadow-sky-900/20 sm:p-10"><div class="grid gap-8 lg:grid-cols-[.7fr_1.3fr]"><div><p class="text-sm font-bold uppercase tracking-[.2em] text-cyan-200">Monitor local</p><h2 class="mt-2 text-4xl font-black">Sismos en Chile</h2><p class="mt-4 text-sky-100/80">Eventos detectados mediante filtrado local del conjunto global de los últimos 30 días.</p><div class="mt-8 text-6xl font-black" id="chileCount">—</div><p class="text-sm text-cyan-200">eventos encontrados</p></div><div id="chileList" class="quake-scroll max-h-80 space-y-3 overflow-y-auto pr-2"></div></div></div></section>
+
+    <section id="educacion" class="border-y border-slate-200 py-20 dark:border-white/10"><div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div class="reveal max-w-2xl"><p class="text-sm font-bold uppercase tracking-[.2em] text-amber-600">Geología en movimiento</p><h2 class="mt-2 text-4xl font-black">Tres claves para leer el planeta</h2></div><div class="quake-scroll mt-10 flex snap-x gap-5 overflow-x-auto pb-5"><article class="reveal min-w-[82vw] snap-center rounded-3xl bg-teal-600 p-8 text-white sm:min-w-[420px]"><span class="text-5xl">〰</span><h3 class="mt-12 text-2xl font-black">Fallas tectónicas</h3><p class="mt-3 text-teal-50">Fracturas donde bloques de la corteza se desplazan y liberan energía acumulada.</p></article><article class="reveal min-w-[82vw] snap-center rounded-3xl bg-amber-400 p-8 text-slate-950 sm:min-w-[420px]"><span class="text-5xl">◎</span><h3 class="mt-12 text-2xl font-black">Magnitud</h3><p class="mt-3">Escala logarítmica: cada unidad representa aproximadamente 32 veces más energía liberada.</p></article><article class="reveal min-w-[82vw] snap-center rounded-3xl bg-indigo-600 p-8 text-white sm:min-w-[420px]"><span class="text-5xl">↧</span><h3 class="mt-12 text-2xl font-black">Profundidad</h3><p class="mt-3 text-indigo-100">Los sismos superficiales suelen sentirse con mayor intensidad cerca del epicentro.</p></article></div></div></section>
+
+    <section id="multimedia" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <div class="reveal flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div class="max-w-2xl"><p class="text-sm font-bold uppercase tracking-[.2em] text-sky-600 dark:text-sky-400">Atlas visual</p><h2 class="mt-2 text-4xl font-black">Así se mueve la Tierra</h2></div>
+        <p class="max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">Seis ilustraciones originales para comprender los procesos que ocurren bajo nuestros pies.</p>
+      </div>
+
+      <div class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/corteza-terrestre.webp" alt="Ilustración de placas tectónicas afectando la corteza terrestre" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">01 · Corteza</p><h3 class="mt-2 text-xl font-black">La corteza bajo presión</h3><p class="mt-2 text-sm text-slate-300">Las placas acumulan tensión hasta que la roca se fractura y libera energía.</p></figcaption></figure>
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/magnitud-energia.webp" alt="Ilustración de la energía sísmica expandiéndose desde el hipocentro" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">02 · Magnitud</p><h3 class="mt-2 text-xl font-black">Energía en expansión</h3><p class="mt-2 text-sm text-slate-300">La magnitud representa la energía liberada en el foco del terremoto.</p></figcaption></figure>
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/ondas-sismicas.webp" alt="Ilustración de ondas P y S viajando por el interior terrestre" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">03 · Ondas</p><h3 class="mt-2 text-xl font-black">Ondas P y S</h3><p class="mt-2 text-sm text-slate-300">Distintas vibraciones recorren el planeta a velocidades y movimientos diferentes.</p></figcaption></figure>
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/profundidad-sismos.webp" alt="Comparación visual de terremotos superficiales y profundos" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">04 · Profundidad</p><h3 class="mt-2 text-xl font-black">Superficial o profundo</h3><p class="mt-2 text-sm text-slate-300">La profundidad del foco influye en cómo se percibe el movimiento en la superficie.</p></figcaption></figure>
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/falla-tectonica.webp" alt="Paisaje desplazado lateralmente por una falla tectónica" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">05 · Falla</p><h3 class="mt-2 text-xl font-black">El terreno se desplaza</h3><p class="mt-2 text-sm text-slate-300">Una falla de rumbo mueve horizontalmente caminos, ríos y formaciones rocosas.</p></figcaption></figure>
+        <figure class="reveal group overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"><img src="assets/images/tsunami-subduccion.webp" alt="Ilustración de un terremoto submarino generando un tsunami" loading="lazy" class="aspect-[3/2] w-full object-cover transition duration-700 group-hover:scale-105"><figcaption class="p-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">06 · Tsunami</p><h3 class="mt-2 text-xl font-black">El océano se desplaza</h3><p class="mt-2 text-sm text-slate-300">El levantamiento brusco del fondo marino mueve la columna de agua y genera olas.</p></figcaption></figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-10 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8"><p>Diseñado por <strong class="text-slate-800 dark:text-white">Francisco</strong> · Hackatón Sismógrafo Global</p><p>Datos provistos por <a class="font-bold text-teal-600 hover:underline" href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS Earthquake Hazards Program</a></p></footer>
+  <script src="app.js?v=1.1.0" defer></script>
+</body>
+</html>
