@@ -69,7 +69,7 @@ class DashboardController {
       this.renderDepths();
       this.renderChile();
       this.renderChart(this.significant);
-      this.renderUpdated(data.hour.metadata.updated, data.fromCache);
+      this.renderUpdated(data.hour.metadata.generated, data.fromCache);
     } catch (error) {
       this.showError(error.message.includes('Failed to fetch') ? 'No fue posible conectar con USGS. Revisa tu conexión e inténtalo nuevamente.' : error.message);
     } finally { this.setLoading(false); }
