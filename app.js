@@ -53,6 +53,7 @@ class DashboardController {
     this.number = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 });
     this.bindEvents();
     this.setupReveal();
+    this.setupEmergencyKit();
   }
 
   async init(force = false) {
@@ -87,6 +88,34 @@ class DashboardController {
       if (this.chart) this.renderChart(this.filteredEvents());
     });
     this.updateThemeIcon();
+  }
+
+  setupEmergencyKit() {
+    const storageKey = 'sismoscope-emergency-kit';
+    const checkboxes = [...document.querySelectorAll('#kitChecklist input[type="checkbox"]')];
+    const progress = document.querySelector('#kitProgress');
+    let saved = [];
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      saved = Array.isArray(stored) ? stored : [];
+    } catch {
+      localStorage.removeItem(storageKey);
+    }
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = saved.includes(checkbox.value);
+      checkbox.addEventListener('change', () => {
+        const selected = checkboxes.filter(item => item.checked).map(item => item.value);
+        localStorage.setItem(storageKey, JSON.stringify(selected));
+        updateProgress();
+      });
+    });
+    const updateProgress = () => { progress.textContent = `${checkboxes.filter(item => item.checked).length} de ${checkboxes.length}`; };
+    document.querySelector('#resetKitButton').addEventListener('click', () => {
+      checkboxes.forEach(item => { item.checked = false; });
+      localStorage.removeItem(storageKey);
+      updateProgress();
+    });
+    updateProgress();
   }
 
   filteredEvents() {
