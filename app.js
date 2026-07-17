@@ -54,10 +54,11 @@ class DashboardController {
     this.bindEvents();
     this.setupReveal();
     this.setupEmergencyKit();
+    this.liveTimer = setInterval(() => this.init(true, true), CACHE_TTL);
   }
 
-  async init(force = false) {
-    this.setLoading(true);
+  async init(force = false, silent = false) {
+    if (!silent) this.setLoading(true);
     this.hideError();
     try {
       const data = await this.service.getAll(force);
@@ -72,7 +73,7 @@ class DashboardController {
       this.renderUpdated(data.hour.metadata.generated, data.fromCache);
     } catch (error) {
       this.showError(error.message.includes('Failed to fetch') ? 'No fue posible conectar con USGS. Revisa tu conexión e inténtalo nuevamente.' : error.message);
-    } finally { this.setLoading(false); }
+    } finally { if (!silent) this.setLoading(false); }
   }
 
   bindEvents() {
