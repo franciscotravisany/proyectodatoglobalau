@@ -1,6 +1,6 @@
 # SismoScope - Explorador de Datos Sísmicos
 
-Dashboard responsive construido con HTML5, Tailwind CSS por CDN y JavaScript puro. Consume datos GeoJSON públicos del USGS y cumple los criterios Bronce, Plata y Oro de la hackatón.
+Dashboard responsive construido con HTML5, Tailwind CSS por CDN y JavaScript puro. Consume datos GeoJSON públicos del USGS y cumple los criterios Bronce, Plata y Oro del Proyecto Dato Global AU.
 
 Incluye además un atlas educativo con seis ilustraciones originales sobre corteza, magnitud, ondas sísmicas, profundidad, fallas y tsunamis.
 
@@ -23,7 +23,7 @@ Abre `index.html` mediante un servidor local (por ejemplo, la extensión Live Se
 
 ## Publicación en GitHub Pages
 
-1. Sube estos archivos a un repositorio público llamado `hackaton-sismografo-global`.
+1. Sube estos archivos a un repositorio público llamado `proyectodatoglobalau`.
 2. En GitHub, entra a **Settings > Pages**.
 3. Selecciona **Deploy from a branch**, rama `main`, carpeta `/ (root)` y guarda.
 4. Verifica la URL publicada en una ventana de incógnito.
