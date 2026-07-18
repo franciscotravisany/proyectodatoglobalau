@@ -67,9 +67,6 @@ class DashboardController {
       this.month = data.month.features.map(item => new Earthquake(item));
       this.renderMetrics();
       this.renderFiltered();
-      this.renderDepths();
-      this.renderChile();
-      this.renderChart(this.significant);
       this.renderUpdated(data.hour.metadata.generated, data.fromCache);
     } catch (error) {
       this.showError(error.message.includes('Failed to fetch') ? 'No fue posible conectar con USGS. Revisa tu conexión e inténtalo nuevamente.' : error.message);
@@ -77,6 +74,7 @@ class DashboardController {
   }
 
   bindEvents() {
+    document.querySelector('#periodFilter').addEventListener('change', () => this.renderFiltered());
     document.querySelector('#magnitudeFilter').addEventListener('change', () => this.renderFiltered());
     document.querySelector('#countryFilter').addEventListener('change', () => this.renderFiltered());
     document.querySelector('#placeFilter').addEventListener('input', () => this.renderFiltered());
@@ -119,10 +117,13 @@ class DashboardController {
   }
 
   filteredEvents() {
+    const days = Number(document.querySelector('#periodFilter').value);
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     const min = Number(document.querySelector('#magnitudeFilter').value);
     const country = document.querySelector('#countryFilter').value.toLocaleLowerCase('es');
     const query = document.querySelector('#placeFilter').value.trim().toLocaleLowerCase('es');
     return this.month
+      .filter(item => item.time >= cutoff)
       .filter(item => item.magnitude >= min)
       .filter(item => !country || item.place.toLocaleLowerCase('es').includes(country))
       .filter(item => item.place.toLocaleLowerCase('es').includes(query))
@@ -131,9 +132,15 @@ class DashboardController {
 
   renderFiltered() {
     const events = this.filteredEvents();
+    const days = Number(document.querySelector('#periodFilter').value);
     const list = document.querySelector('#eventList');
-    list.innerHTML = events.length ? events.slice(0, 40).map(item => this.eventCard(item)).join('') : '<p class="col-span-2 rounded-2xl bg-sky-100 p-8 text-center text-slate-600 dark:bg-white/5 dark:text-slate-300">No se encontraron eventos para esta búsqueda en los últimos 30 días.</p>';
-    if (this.chart) this.renderChart(events.length ? events : this.significant);
+    document.querySelector('#catalogPeriodLabel').textContent = `Catálogo de los últimos ${days} días`;
+    document.querySelector('#chartPeriodLabel').textContent = `Últimos ${days} días`;
+    document.querySelector('#chilePeriodText').textContent = `Eventos de los últimos ${days} días representados sobre el territorio.`;
+    list.innerHTML = events.length ? events.slice(0, 50).map(item => this.eventCard(item)).join('') : `<p class="rounded-2xl bg-[#e4ddd3] p-8 text-center text-stone-600 dark:bg-white/5 dark:text-stone-300">No se encontraron eventos para esta búsqueda en los últimos ${days} días.</p>`;
+    this.renderDepths();
+    this.renderChile();
+    this.renderChart(events);
   }
 
   renderMetrics() {
@@ -145,25 +152,35 @@ class DashboardController {
       ['Evento más reciente', latest ? this.relativeTime(latest.time) : '—', latest?.place || 'Sin eventos', '◷'],
       ['Alertas de tsunami', this.number.format(this.hour.filter(item => item.tsunami).length), 'Reportadas por USGS', '≈']
     ];
-    document.querySelector('#metrics').innerHTML = values.map(([label, value, detail, icon]) => `<article class="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-teal-400 dark:border-white/10 dark:bg-white/[.04]"><div class="flex justify-between"><p class="text-sm font-semibold text-slate-500 dark:text-slate-400">${label}</p><span class="text-teal-500">${icon}</span></div><strong class="mt-5 block text-4xl font-black tracking-tight">${value}</strong><p class="mt-2 truncate text-xs text-slate-500 dark:text-slate-400" title="${detail}">${detail}</p></article>`).join('');
+    document.querySelector('#metrics').innerHTML = values.map(([label, value, detail, icon]) => `<article class="group rounded-3xl border border-[#d3c8ba] bg-[#f7f3ed] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#8f7766] dark:border-white/10 dark:bg-white/[.04]"><div class="flex justify-between"><p class="text-sm font-semibold text-stone-500 dark:text-stone-400">${label}</p><span class="text-[#55777a]">${icon}</span></div><strong class="mt-5 block text-4xl font-black tracking-tight">${value}</strong><p class="mt-2 truncate text-xs text-stone-500 dark:text-stone-400" title="${detail}">${detail}</p></article>`).join('');
     document.querySelector('#heroCount').textContent = this.number.format(this.hour.length);
   }
 
   eventCard(item) {
-    const tone = item.magnitude >= 6 ? 'bg-red-500' : item.magnitude >= 4 ? 'bg-amber-500' : 'bg-teal-500';
-    return `<article class="flex items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-teal-400 dark:border-white/10"><span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${tone} font-black text-white">${this.number.format(item.magnitude)}</span><div class="min-w-0 flex-1"><a href="${item.url}" target="_blank" rel="noreferrer" class="block truncate font-bold hover:text-teal-500">${item.place}</a><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">${this.formatDate(item.time)} · ${this.number.format(item.depth)} km</p></div><span class="text-slate-300">↗</span></article>`;
+    const tone = item.magnitude >= 6 ? 'bg-[#9b5149]' : item.magnitude >= 4 ? 'bg-[#9a6b4f]' : 'bg-[#55777a]';
+    return `<article class="grid grid-cols-[4rem_1fr] items-center gap-4 rounded-2xl border border-[#d6cbbd] bg-white/55 p-4 transition hover:-translate-y-0.5 hover:border-[#8f7766] hover:bg-white dark:border-white/10 dark:bg-white/[.035] dark:hover:border-[#739396] sm:grid-cols-[4rem_1fr_auto]"><span class="grid h-14 w-14 place-items-center rounded-2xl ${tone} font-black text-white shadow-sm">${this.number.format(item.magnitude)}</span><div class="min-w-0"><a href="${item.url}" target="_blank" rel="noreferrer" class="block truncate font-bold hover:text-[#55777a]">${item.place}</a><p class="mt-1 text-xs text-stone-500 dark:text-stone-400">${this.formatDate(item.time)}</p></div><div class="col-start-2 flex items-center gap-4 text-xs text-stone-500 dark:text-stone-400 sm:col-start-auto sm:text-right"><span><strong class="block text-sm text-stone-800 dark:text-stone-200">${this.number.format(item.depth)} km</strong>profundidad</span><span class="text-xl text-[#8f7766]">↗</span></div></article>`;
   }
 
   renderDepths() {
-    const deepest = [...this.significant].sort((a, b) => b.depth - a.depth).slice(0, 5);
+    const days = Number(document.querySelector('#periodFilter').value);
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const deepest = this.month.filter(item => item.time >= cutoff).sort((a, b) => b.depth - a.depth).slice(0, 5);
     const max = deepest[0]?.depth || 1;
-    document.querySelector('#depthBars').innerHTML = deepest.map(item => `<div><div class="mb-2 flex justify-between gap-3 text-sm"><span class="truncate">${item.place}</span><strong>${this.number.format(item.depth)} km</strong></div><div class="h-2 overflow-hidden rounded-full bg-sky-200 dark:bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-teal-400 to-amber-400 transition-all duration-700" style="width:${Math.max(4, item.depth / max * 100)}%"></div></div></div>`).join('') || '<p class="text-slate-500 dark:text-slate-400">Sin eventos significativos.</p>';
+    document.querySelector('#depthBars').innerHTML = deepest.map(item => `<div><div class="mb-2 flex justify-between gap-3 text-sm"><span class="truncate">${item.place}</span><strong>${this.number.format(item.depth)} km</strong></div><div class="h-2 overflow-hidden rounded-full bg-stone-300 dark:bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-[#55777a] to-[#9a6b4f] transition-all duration-700" style="width:${Math.max(4, item.depth / max * 100)}%"></div></div></div>`).join('') || '<p class="text-stone-500 dark:text-stone-400">Sin eventos en el período.</p>';
   }
 
   renderChile() {
-    const chile = this.month.filter(item => /chile|atacama|coquimbo|valparaíso|valparaiso|antofagasta|maule|biobío|bio-bio|tarapacá|tarapaca/i.test(item.place)).sort((a, b) => b.time - a.time);
+    const days = Number(document.querySelector('#periodFilter').value);
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const chile = this.month.filter(item => item.time >= cutoff).filter(item => /chile|atacama|coquimbo|valparaíso|valparaiso|antofagasta|maule|biobío|bio-bio|tarapacá|tarapaca/i.test(item.place)).sort((a, b) => b.time - a.time);
     document.querySelector('#chileCount').textContent = this.number.format(chile.length);
-    document.querySelector('#chileList').innerHTML = chile.slice(0, 12).map(item => `<article class="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur"><div><h3 class="font-bold">${item.place}</h3><p class="mt-1 text-xs text-cyan-100">${this.formatDate(item.time)} · Prof. ${this.number.format(item.depth)} km</p></div><strong class="text-xl">M${this.number.format(item.magnitude)}</strong></article>`).join('') || '<p class="rounded-2xl bg-white/10 p-6">No se encontraron eventos recientes en Chile.</p>';
+    document.querySelector('#chileList').innerHTML = chile.slice(0, 12).map(item => `<article class="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/10 p-4 backdrop-blur transition hover:bg-white/10"><div><h3 class="font-bold">${item.place}</h3><p class="mt-1 text-xs text-stone-300">${this.formatDate(item.time)} · ${this.number.format(item.depth)} km de profundidad</p></div><strong class="rounded-xl bg-[#d9b49f]/15 px-3 py-2 text-lg text-[#e1c1af]">M${this.number.format(item.magnitude)}</strong></article>`).join('') || '<p class="rounded-2xl bg-white/10 p-6">No se encontraron eventos recientes en Chile.</p>';
+    document.querySelector('#chileMapDots').innerHTML = chile.slice(0, 18).map(item => {
+      const x = Math.max(42, Math.min(118, 80 + (item.longitude + 70) * 5));
+      const y = Math.max(18, Math.min(500, 18 + (-17.5 - item.latitude) / 38.5 * 482));
+      const radius = Math.max(3, Math.min(8, item.magnitude));
+      return `<circle cx="${x}" cy="${y}" r="${radius}" fill="#b86459" stroke="#f1d7c7" stroke-width="2"><animate attributeName="opacity" values="1;.35;1" dur="2.4s" repeatCount="indefinite"/></circle>`;
+    }).join('');
   }
 
   renderChart(events) {
@@ -173,7 +190,7 @@ class DashboardController {
     this.chart?.destroy();
     const dark = document.documentElement.classList.contains('dark');
     const tickColor = dark ? '#94a3b8' : '#475569';
-    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#2dd4bf', '#2dd4bf', '#14b8a6', '#fbbf24', '#f97316', '#ef4444'], borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: dark ? '#ffffff12' : '#0f172a18' } } } } });
+    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#759396', '#6c8b8e', '#628285', '#58787b', '#4e6e71', '#455f62'], hoverBackgroundColor: '#9a6b4f', borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: dark ? '#ffffff12' : '#29282418' } } } } });
   }
 
   renderUpdated(timestamp, fromCache) {
