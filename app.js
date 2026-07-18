@@ -166,7 +166,7 @@ class DashboardController {
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     const deepest = this.month.filter(item => item.time >= cutoff).sort((a, b) => b.depth - a.depth).slice(0, 5);
     const max = deepest[0]?.depth || 1;
-    document.querySelector('#depthBars').innerHTML = deepest.map(item => `<div><div class="mb-2 flex justify-between gap-3 text-sm"><span class="truncate">${item.place}</span><strong>${this.number.format(item.depth)} km</strong></div><div class="h-2 overflow-hidden rounded-full bg-stone-300 dark:bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-[#55777a] to-[#9a6b4f] transition-all duration-700" style="width:${Math.max(4, item.depth / max * 100)}%"></div></div></div>`).join('') || '<p class="text-stone-500 dark:text-stone-400">Sin eventos en el período.</p>';
+    document.querySelector('#depthBars').innerHTML = deepest.map(item => `<div><div class="mb-2 flex justify-between gap-3 text-sm"><span class="truncate">${item.place}</span><strong>${this.number.format(item.depth)} km</strong></div><div class="h-2 overflow-hidden rounded-full bg-stone-300 dark:bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-[#c0a875] to-[#806642] transition-all duration-700" style="width:${Math.max(4, item.depth / max * 100)}%"></div></div></div>`).join('') || '<p class="text-stone-500 dark:text-stone-400">Sin eventos en el período.</p>';
   }
 
   renderChile() {
@@ -190,7 +190,7 @@ class DashboardController {
     this.chart?.destroy();
     const dark = document.documentElement.classList.contains('dark');
     const tickColor = dark ? '#94a3b8' : '#475569';
-    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#759396', '#6c8b8e', '#628285', '#58787b', '#4e6e71', '#455f62'], hoverBackgroundColor: '#9a6b4f', borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: dark ? '#ffffff12' : '#29282418' } } } } });
+    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#c6b287', '#bca474', '#b29663', '#a58954', '#947849', '#806642'], hoverBackgroundColor: '#d2b477', borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: dark ? '#ffffff12' : '#29282418' } } } } });
   }
 
   renderUpdated(timestamp, fromCache) {
