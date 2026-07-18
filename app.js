@@ -54,7 +54,6 @@ class DashboardController {
     this.bindEvents();
     this.setupReveal();
     this.setupEmergencyKit();
-    this.setupEarthRotation();
     this.liveTimer = setInterval(() => this.init(true, true), CACHE_TTL);
   }
 
@@ -115,22 +114,6 @@ class DashboardController {
       updateProgress();
     });
     updateProgress();
-  }
-
-  setupEarthRotation() {
-    const frame = document.querySelector('#earthFrame');
-    if (!frame || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const frames = Array.from({ length: 12 }, (_, index) => `assets/images/earth-frames/earth-${String(index + 1).padStart(2, '0')}.jpg`);
-    frames.forEach(source => { const image = new Image(); image.src = source; });
-    let current = 0;
-    this.earthTimer = setInterval(() => {
-      frame.style.opacity = '0.35';
-      setTimeout(() => {
-        current = (current + 1) % frames.length;
-        frame.src = frames[current];
-        frame.style.opacity = '1';
-      }, 350);
-    }, 2400);
   }
 
   filteredEvents() {

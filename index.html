@@ -14,14 +14,16 @@
   <style>
     @keyframes pulse-ring { 0% { transform: scale(.7); opacity: .9 } 100% { transform: scale(1.9); opacity: 0 } }
     @keyframes radar-sweep { to { transform:rotate(360deg); } }
+    @keyframes earth-rotation { to { transform:translate3d(-50%,0,0); } }
     .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
     .live-radar { position:relative; width:1.2rem; height:1.2rem; overflow:hidden; border:1px solid #b89a63; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 3px,rgb(168 134 78 / .32) 4px 5px),#273638; box-shadow:0 0 0 2px rgb(168 134 78 / .12); }
     .live-radar::before { content:""; position:absolute; inset:-1px; border-radius:50%; background:conic-gradient(from 0deg,transparent 0 76%,rgb(210 180 119 / .75) 96%,transparent 100%); animation:radar-sweep 6s linear infinite; }
     .live-radar::after { content:""; position:absolute; left:50%; top:50%; width:3px; height:3px; border-radius:50%; background:#d2b477; transform:translate(-50%,-50%); box-shadow:0 0 5px #d2b477; }
-    .hero-globe { position:absolute; inset:30%; display:grid; place-items:center; overflow:hidden; border:2px solid #9f8659; border-radius:9999px; background:#020405; color:white; box-shadow:inset -20px -14px 36px rgb(7 15 18 / .5),0 18px 42px rgb(40 48 47 / .24); }
-    .hero-globe::before { content:""; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 30% 22%,rgb(255 255 255 / .3),transparent 24%),linear-gradient(100deg,transparent 42%,rgb(1 7 9 / .62) 92%); z-index:2; pointer-events:none; }
-    .hero-globe::after { content:""; position:absolute; inset:7%; border-radius:inherit; border:1px solid rgb(255 255 255 / .18); box-shadow:0 0 0 18px rgb(255 255 255 / .025); }
-    .earth-frame { position:absolute; inset:0; height:100%; width:100%; object-fit:cover; transition:opacity .45s ease; }
+    .hero-globe { position:absolute; inset:30%; overflow:hidden; border:2px solid #9f8659; border-radius:9999px; background:#020405; box-shadow:inset -22px -12px 38px rgb(1 5 7 / .72),0 18px 42px rgb(40 48 47 / .24),0 0 22px rgb(93 155 179 / .18); }
+    .earth-surface { position:absolute; inset:0 auto 0 0; width:400%; height:100%; background-image:url('assets/images/tierra-blue-marble-2048.jpg'),url('assets/images/tierra-blue-marble-2048.jpg'); background-position:left top,right top; background-repeat:no-repeat; background-size:50% 100%,50% 100%; animation:earth-rotation 42s linear infinite; will-change:transform; }
+    .hero-globe::before { content:""; position:absolute; inset:0; z-index:2; border-radius:inherit; background:radial-gradient(circle at 31% 24%,rgb(255 255 255 / .25),transparent 22%),linear-gradient(100deg,transparent 39%,rgb(1 6 9 / .68) 94%); box-shadow:inset 13px 2px 18px rgb(94 177 207 / .18),inset -22px -8px 30px rgb(0 0 0 / .7); pointer-events:none; }
+    .hero-globe::after { content:""; position:absolute; inset:2px; z-index:3; border-radius:inherit; border:1px solid rgb(169 222 240 / .24); box-shadow:inset 0 0 10px rgb(110 201 230 / .18); pointer-events:none; }
+    @media (prefers-reduced-motion: reduce) { .earth-surface { animation:none; } }
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
     .reveal.visible { opacity: 1; transform: none; }
     .quake-scroll { scrollbar-width: thin; scrollbar-color: #14b8a6 transparent; }
@@ -59,7 +61,7 @@
       <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(14,165,233,.22),transparent_35%),radial-gradient(circle_at_10%_70%,rgba(45,212,191,.18),transparent_30%)]"></div>
       <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[1.1fr_.9fr] lg:px-8">
         <div><p class="mb-5 inline-flex items-center gap-2 rounded-full border border-[#a8864e]/35 bg-[#a8864e]/10 px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-[#765d32] dark:text-[#d2b477]"><span class="h-2 w-2 animate-pulse rounded-full bg-[#a8864e]"></span> Datos globales en tiempo real</p><h1 class="max-w-3xl text-5xl font-black leading-[.95] tracking-[-.05em] sm:text-6xl lg:text-7xl">La Tierra se mueve.<br><span class="text-[#a8864e]">Nosotros la medimos.</span></h1><p class="mt-6 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-300">Explora la actividad sísmica mundial registrada por el USGS, detecta patrones y observa qué está ocurriendo en Chile.</p><div class="mt-8 flex flex-wrap gap-3"><a href="#panel" class="rounded-full bg-[#3c3935] px-6 py-3 font-bold text-white shadow-lg transition hover:-translate-y-1 dark:bg-[#b39155] dark:text-[#161513]">Explorar datos ↓</a><span id="updateBadge" class="rounded-full border border-[#a8864e]/30 px-5 py-3 text-sm text-slate-500 dark:border-[#d2b477]/20 dark:text-slate-400">Esperando datos...</span></div></div>
-        <div class="relative mx-auto aspect-square w-full max-w-md"><div class="absolute inset-0 rounded-full border border-[#a8864e]/20"></div><div class="absolute inset-[12%] rounded-full border border-[#a8864e]/30"></div><div class="absolute inset-[25%] rounded-full border border-[#a8864e]/40"></div><div class="pulse-ring absolute left-[58%] top-[25%] h-20 w-20 rounded-full border border-[#9a6b4f]"></div><div class="hero-globe" role="img" aria-label="Secuencia fotográfica de la Tierra capturada por DSCOVR"><img id="earthFrame" src="assets/images/earth-frames/earth-01.jpg" alt="" class="earth-frame"></div></div>
+        <div class="relative mx-auto aspect-square w-full max-w-md"><div class="absolute inset-0 rounded-full border border-[#a8864e]/20"></div><div class="absolute inset-[12%] rounded-full border border-[#a8864e]/30"></div><div class="absolute inset-[25%] rounded-full border border-[#a8864e]/40"></div><div class="pulse-ring absolute left-[58%] top-[25%] h-20 w-20 rounded-full border border-[#9a6b4f]"></div><div class="hero-globe" role="img" aria-label="Planeta Tierra con rotación continua sobre su eje"><div class="earth-surface" aria-hidden="true"></div></div></div>
       </div>
     </section>
 
@@ -157,6 +159,6 @@
     <div><p>Diseñado por <strong class="text-slate-800 dark:text-white">Francisco Javier Travisany Flores</strong> · Proyecto Dato Global AU</p><nav class="mt-2 flex flex-wrap gap-4" aria-label="Perfiles del autor"><a class="font-bold text-sky-700 transition hover:text-teal-600 hover:underline dark:text-sky-300" href="https://github.com/franciscotravisany" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a class="font-bold text-sky-700 transition hover:text-teal-600 hover:underline dark:text-sky-300" href="https://www.linkedin.com/in/francisco-javier-travisany-flores-452b97b0/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></nav></div>
     <p>Datos: <a class="font-bold text-[#8a6b38] hover:underline dark:text-[#d2b477]" href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS</a> · Imagen Tierra: <a class="font-bold text-[#8a6b38] hover:underline dark:text-[#d2b477]" href="https://visibleearth.nasa.gov/" target="_blank" rel="noreferrer">NASA Visible Earth</a></p>
   </footer>
-  <script src="app.js?v=1.5.0" defer></script>
+  <script src="app.js?v=1.5.1" defer></script>
 </body>
 </html>
