@@ -54,6 +54,7 @@ class DashboardController {
     this.bindEvents();
     this.setupReveal();
     this.setupEmergencyKit();
+    this.setupRealEarth();
     this.liveTimer = setInterval(() => this.init(true, true), CACHE_TTL);
   }
 
@@ -114,6 +115,142 @@ class DashboardController {
       updateProgress();
     });
     updateProgress();
+  }
+
+  setupRealEarth() {
+    const canvas = document.querySelector('#earthCanvas');
+    const globe = canvas?.closest('.hero-globe');
+    const gl = canvas?.getContext('webgl', { antialias: true, alpha: false });
+    if (!canvas || !gl) {
+      globe?.classList.add('earth-fallback');
+      if (canvas) canvas.hidden = true;
+      return;
+    }
+
+    const vertexSource = `
+      attribute vec3 aPosition;
+      attribute vec2 aTexture;
+      uniform float uRotation;
+      varying vec2 vTexture;
+      varying vec3 vNormal;
+      void main() {
+        float c = cos(uRotation);
+        float s = sin(uRotation);
+        vec3 point = vec3(c * aPosition.x + s * aPosition.z, aPosition.y, -s * aPosition.x + c * aPosition.z);
+        vNormal = normalize(point);
+        vTexture = aTexture;
+        gl_Position = vec4(point.x * 0.93, point.y * 0.93, point.z * 0.12, 1.0);
+      }
+    `;
+    const fragmentSource = `
+      precision mediump float;
+      uniform sampler2D uEarth;
+      varying vec2 vTexture;
+      varying vec3 vNormal;
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 light = normalize(vec3(-0.45, 0.55, -1.0));
+        float diffuse = max(dot(normal, light), 0.0);
+        float rim = pow(1.0 - abs(normal.z), 3.0);
+        vec3 surface = texture2D(uEarth, vTexture).rgb;
+        vec3 color = surface * (0.48 + diffuse * 0.62);
+        color += vec3(0.10, 0.27, 0.38) * rim * 0.55;
+        color += vec3(1.0) * pow(diffuse, 18.0) * 0.07;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+    const compile = (type, source) => {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      return shader;
+    };
+    const program = gl.createProgram();
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      globe.classList.add('earth-fallback');
+      canvas.hidden = true;
+      return;
+    }
+
+    const positions = [];
+    const textures = [];
+    const indices = [];
+    const latitudeBands = 48;
+    const longitudeBands = 64;
+    for (let latitude = 0; latitude <= latitudeBands; latitude += 1) {
+      const v = latitude / latitudeBands;
+      const phi = -Math.PI / 2 + v * Math.PI;
+      const radius = Math.cos(phi);
+      for (let longitude = 0; longitude <= longitudeBands; longitude += 1) {
+        const u = longitude / longitudeBands;
+        const theta = u * Math.PI * 2;
+        positions.push(Math.cos(theta) * radius, Math.sin(phi), Math.sin(theta) * radius);
+        textures.push(u, v);
+      }
+    }
+    for (let latitude = 0; latitude < latitudeBands; latitude += 1) {
+      for (let longitude = 0; longitude < longitudeBands; longitude += 1) {
+        const first = latitude * (longitudeBands + 1) + longitude;
+        const second = first + longitudeBands + 1;
+        indices.push(first, second, first + 1, second, second + 1, first + 1);
+      }
+    }
+    const bindBuffer = (target, data, type = gl.FLOAT) => {
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(target, buffer);
+      gl.bufferData(target, type === gl.FLOAT ? new Float32Array(data) : new Uint16Array(data), gl.STATIC_DRAW);
+      return buffer;
+    };
+    const positionBuffer = bindBuffer(gl.ARRAY_BUFFER, positions);
+    const textureBuffer = bindBuffer(gl.ARRAY_BUFFER, textures);
+    const indexBuffer = bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices, gl.UNSIGNED_SHORT);
+    const earthTexture = gl.createTexture();
+    const image = new Image();
+    image.src = 'assets/images/tierra-blue-marble-2048.jpg';
+    image.addEventListener('load', () => {
+      gl.bindTexture(gl.TEXTURE_2D, earthTexture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.useProgram(program);
+      const positionLocation = gl.getAttribLocation(program, 'aPosition');
+      const textureLocation = gl.getAttribLocation(program, 'aTexture');
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(positionLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+      gl.vertexAttribPointer(textureLocation, 2, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(textureLocation);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+      gl.enable(gl.DEPTH_TEST);
+      gl.clearColor(0, 0, 0, 1);
+      const rotationLocation = gl.getUniformLocation(program, 'uRotation');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const started = performance.now();
+      const draw = now => {
+        const size = Math.max(1, Math.round(canvas.clientWidth * Math.min(devicePixelRatio, 2)));
+        if (canvas.width !== size || canvas.height !== size) {
+          canvas.width = size;
+          canvas.height = size;
+          gl.viewport(0, 0, size, size);
+        }
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        const rotation = 1.22 + (reducedMotion ? 0 : (now - started) / 42000 * Math.PI * 2);
+        gl.uniform1f(rotationLocation, rotation);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+        if (!reducedMotion) requestAnimationFrame(draw);
+      };
+      requestAnimationFrame(draw);
+    });
+    image.addEventListener('error', () => {
+      globe.classList.add('earth-fallback');
+      canvas.hidden = true;
+    });
   }
 
   filteredEvents() {
