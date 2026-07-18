@@ -189,8 +189,9 @@ class DashboardController {
     events.forEach(({ magnitude }) => counts[magnitude < 2 ? 0 : magnitude < 3 ? 1 : magnitude < 4 ? 2 : magnitude < 5 ? 3 : magnitude < 6 ? 4 : 5]++);
     this.chart?.destroy();
     const dark = document.documentElement.classList.contains('dark');
-    const tickColor = dark ? '#94a3b8' : '#475569';
-    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#c6b287', '#bca474', '#b29663', '#a58954', '#947849', '#806642'], hoverBackgroundColor: '#d2b477', borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: dark ? '#ffffff12' : '#29282418' } } } } });
+    const tickColor = dark ? '#e7dcc8' : '#3f3932';
+    const titleColor = dark ? '#d2b477' : '#765d32';
+    this.chart = new Chart(document.querySelector('#magnitudeChart'), { type: 'bar', data: { labels: bins, datasets: [{ label: 'Cantidad de sismos', data: counts, backgroundColor: ['#c6b287', '#bca474', '#b29663', '#a58954', '#947849', '#806642'], hoverBackgroundColor: '#d2b477', borderRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: { left: 8, bottom: 4 } }, plugins: { legend: { display: false } }, scales: { x: { border: { display: true, color: tickColor }, grid: { display: false }, ticks: { display: true, color: tickColor, font: { weight: '600' } }, title: { display: true, text: 'Rango de magnitud', color: titleColor, font: { weight: '700', size: 13 }, padding: { top: 12 } } }, y: { beginAtZero: true, border: { display: true, color: tickColor }, ticks: { display: true, precision: 0, color: tickColor, font: { weight: '600' } }, title: { display: true, text: 'Cantidad de eventos', color: titleColor, font: { weight: '700', size: 13 }, padding: { bottom: 10 } }, grid: { color: dark ? '#ffffff18' : '#29282418' } } } } });
   }
 
   renderUpdated(timestamp, fromCache) {
