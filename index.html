@@ -6,7 +6,7 @@
   <meta name="description" content="Panel interactivo de actividad sísmica mundial con datos del USGS.">
   <title>SismoScope | Explorador sísmico global</title>
   <script>
-    if (localStorage.getItem('sismoscope-theme') === 'dark' || (!localStorage.getItem('sismoscope-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    if (localStorage.getItem('sismoscope-theme') !== 'light') document.documentElement.classList.add('dark');
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
