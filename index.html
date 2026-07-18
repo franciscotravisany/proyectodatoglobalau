@@ -13,16 +13,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
     @keyframes pulse-ring { 0% { transform: scale(.7); opacity: .9 } 100% { transform: scale(1.9); opacity: 0 } }
-    @keyframes earth-photo-spin { to { transform:rotate(360deg); } }
+    @keyframes earth-axis-rotation { to { background-position:200% center; } }
     @keyframes radar-sweep { to { transform:rotate(360deg); } }
     .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
     .live-radar { position:relative; width:1.2rem; height:1.2rem; overflow:hidden; border:1px solid #b89a63; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 3px,rgb(168 134 78 / .32) 4px 5px),#273638; box-shadow:0 0 0 2px rgb(168 134 78 / .12); }
     .live-radar::before { content:""; position:absolute; inset:-1px; border-radius:50%; background:conic-gradient(from 0deg,transparent 0 76%,rgb(210 180 119 / .75) 96%,transparent 100%); animation:radar-sweep 6s linear infinite; }
     .live-radar::after { content:""; position:absolute; left:50%; top:50%; width:3px; height:3px; border-radius:50%; background:#d2b477; transform:translate(-50%,-50%); box-shadow:0 0 5px #d2b477; }
-    .hero-globe { position:absolute; inset:30%; display:grid; place-items:center; overflow:hidden; border:2px solid #9f8659; border-radius:9999px; background:#020405; color:white; box-shadow:inset -20px -14px 36px rgb(7 15 18 / .5),0 18px 42px rgb(40 48 47 / .24); }
-    .hero-globe::before { content:""; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 31% 24%,rgb(255 255 255 / .28),transparent 25%),linear-gradient(110deg,transparent 48%,rgb(4 12 15 / .45)); z-index:2; pointer-events:none; }
+    .hero-globe { position:absolute; inset:30%; display:grid; place-items:center; overflow:hidden; border:2px solid #9f8659; border-radius:9999px; background-color:#020405; background-image:url('assets/images/tierra-nasa-textura.jpg'); background-position:0 center; background-repeat:repeat-x; background-size:auto 100%; color:white; box-shadow:inset -20px -14px 36px rgb(7 15 18 / .5),0 18px 42px rgb(40 48 47 / .24); animation:earth-axis-rotation 80s linear infinite; will-change:background-position; }
+    .hero-globe::before { content:""; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 30% 22%,rgb(255 255 255 / .3),transparent 24%),linear-gradient(100deg,transparent 42%,rgb(1 7 9 / .62) 92%); z-index:2; pointer-events:none; }
     .hero-globe::after { content:""; position:absolute; inset:7%; border-radius:inherit; border:1px solid rgb(255 255 255 / .18); box-shadow:0 0 0 18px rgb(255 255 255 / .025); }
-    .hero-earth-photo { position:absolute; height:92%; width:92%; object-fit:contain; opacity:.9; filter:brightness(.84) saturate(.82); animation:earth-photo-spin 70s linear infinite; }
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
     .reveal.visible { opacity: 1; transform: none; }
     .quake-scroll { scrollbar-width: thin; scrollbar-color: #14b8a6 transparent; }
@@ -60,7 +59,7 @@
       <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(14,165,233,.22),transparent_35%),radial-gradient(circle_at_10%_70%,rgba(45,212,191,.18),transparent_30%)]"></div>
       <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[1.1fr_.9fr] lg:px-8">
         <div><p class="mb-5 inline-flex items-center gap-2 rounded-full border border-[#a8864e]/35 bg-[#a8864e]/10 px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-[#765d32] dark:text-[#d2b477]"><span class="h-2 w-2 animate-pulse rounded-full bg-[#a8864e]"></span> Datos globales en tiempo real</p><h1 class="max-w-3xl text-5xl font-black leading-[.95] tracking-[-.05em] sm:text-6xl lg:text-7xl">La Tierra se mueve.<br><span class="text-[#a8864e]">Nosotros la medimos.</span></h1><p class="mt-6 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-300">Explora la actividad sísmica mundial registrada por el USGS, detecta patrones y observa qué está ocurriendo en Chile.</p><div class="mt-8 flex flex-wrap gap-3"><a href="#panel" class="rounded-full bg-[#3c3935] px-6 py-3 font-bold text-white shadow-lg transition hover:-translate-y-1 dark:bg-[#b39155] dark:text-[#161513]">Explorar datos ↓</a><span id="updateBadge" class="rounded-full border border-[#a8864e]/30 px-5 py-3 text-sm text-slate-500 dark:border-[#d2b477]/20 dark:text-slate-400">Esperando datos...</span></div></div>
-        <div class="relative mx-auto aspect-square w-full max-w-md"><div class="absolute inset-0 rounded-full border border-[#a8864e]/20"></div><div class="absolute inset-[12%] rounded-full border border-[#a8864e]/30"></div><div class="absolute inset-[25%] rounded-full border border-[#a8864e]/40"></div><div class="pulse-ring absolute left-[58%] top-[25%] h-20 w-20 rounded-full border border-[#9a6b4f]"></div><div class="hero-globe" role="img" aria-label="Fotografía de la Tierra tomada por DSCOVR girando lentamente"><img src="assets/images/tierra-dscovr-nasa.png" alt="" class="hero-earth-photo"></div></div>
+        <div class="relative mx-auto aspect-square w-full max-w-md"><div class="absolute inset-0 rounded-full border border-[#a8864e]/20"></div><div class="absolute inset-[12%] rounded-full border border-[#a8864e]/30"></div><div class="absolute inset-[25%] rounded-full border border-[#a8864e]/40"></div><div class="pulse-ring absolute left-[58%] top-[25%] h-20 w-20 rounded-full border border-[#9a6b4f]"></div><div class="hero-globe" role="img" aria-label="Fotografía de la Tierra rotando lentamente sobre su eje"></div></div>
       </div>
     </section>
 
