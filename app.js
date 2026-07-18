@@ -153,7 +153,6 @@ class DashboardController {
       ['Alertas de tsunami', this.number.format(this.hour.filter(item => item.tsunami).length), 'Reportadas por USGS', '≈']
     ];
     document.querySelector('#metrics').innerHTML = values.map(([label, value, detail, icon]) => `<article class="group rounded-3xl border border-[#d3c8ba] bg-[#f7f3ed] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#8f7766] dark:border-white/10 dark:bg-white/[.04]"><div class="flex justify-between"><p class="text-sm font-semibold text-stone-500 dark:text-stone-400">${label}</p><span class="text-[#55777a]">${icon}</span></div><strong class="mt-5 block text-4xl font-black tracking-tight">${value}</strong><p class="mt-2 truncate text-xs text-stone-500 dark:text-stone-400" title="${detail}">${detail}</p></article>`).join('');
-    document.querySelector('#heroCount').textContent = this.number.format(this.hour.length);
   }
 
   eventCard(item) {
